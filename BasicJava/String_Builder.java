@@ -18,7 +18,7 @@ public class String_Builder {
             System.out.println(Name);
         // Delete a char
             Name.delete(0, 1);
-            System.out.println(Name);
+            System.out.println(Name); 
         // Add something after the string
             Name.append(" "+"Stark");
             System.out.println(Name);
@@ -39,6 +39,13 @@ public class String_Builder {
           }
                 System.out.println(greet);
 
-       
+       // Pretty Printing--
+
+       float a = 3.257897f;
+        // System.out.printf("Formated number is %.2f " , a); // This is printf function which is used to format the data 
+       // Output for above command will be "3.26" As we want to format it till two digits.
+       System.out.printf(" Pie: %.3f" , Math.PI);
+       System.out.println();
+       System.out.printf("Hello My name is %s and I'm %s", "Kunal" , "cool");
     }
 }

@@ -70,12 +70,12 @@ public class Practice_set_methods{
              //   System.out.println(" The sum of first "+ 1+" Natural no. is : "+ Sum(1)); // it is for second type.
         
         // Q4- find the nth term of Fibonacci sequence.
-            //  System.out.println(" The sum of first "+ 7+" Fibonacci sequence no. is : "+ fib(7));  
+             System.out.println(" The 7th"+" Fibonacci sequence no. is : "+ fib(7));  
             
 
         // Q5- write the function to find the avg. of a set of nos. passed as arguments.
-                 System.out.print(" The avg of these numbers is: ");
-                System.out.println(  num(1,2,3,4));
+                //  System.out.print(" The avg of these numbers is: ");
+                // System.out.println(  num(1,2,3,4));
 
     }       
 

@@ -18,7 +18,7 @@ public class Arrays{
                   System.out.println(marks[1]);
                                                 */
         //3rd-
-            int[]marks={55,56,71,27};
+            int[] marks = {55,56,71,27};
               System.out.println(marks[0]);
                  System.out.println(marks.length);
           
@@ -32,11 +32,18 @@ public class Arrays{
                 System.out.println("Printing using for each loop :");
                  String[]students={"Rohan","Jack","Robert"};
                      for(String element : students){
-                          System.out.println(element);
+                          System.out.print(element + " ");
+                         
+        }
+         System.out.println();
+         // Using for-each loop for array  
+        for(int n : marks){ // "n" here can be any alphabet we want to use its just indicating the elements under array
+            System.out.print(n + " ");
         }
     }
-
+       
     public static Object asList(int[] arr) {
         return null;
     }
+
 } 

@@ -1,5 +1,4 @@
-package java_learnings;
-
+package java_learnings.BitWiseOperators;
 import java.util.Scanner;
 
 public class Bit_manipulation {
@@ -32,7 +31,7 @@ public class Bit_manipulation {
                     int pos =1;
                     int bitmask= 1<<pos;
                     int newnumber = bitmask | n; // set bit
-                  System.out.println(newnumber);
+                  System.out.println(newnumber); 
              
                 } else if (operation==0) {
                     int pos =2;
