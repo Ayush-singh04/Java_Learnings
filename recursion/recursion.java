@@ -34,7 +34,18 @@ public class recursion{
             numsum(i+1,n,sum);
             return;
     }
-     
+    static int sumOfDigits(int n){
+        if (n == 0) {
+            return 0 ;
+        }
+        return n % 10 + sumOfDigits(n / 10) ; // In this step "n%10" will give the last digit to add then "n/10" will make the number one digit less.
+    }
+    static int productOfDigits(int n){
+        if (n % 10 == n) {
+            return n ;
+        }
+        return n % 10 * productOfDigits(n / 10) ; // In this step "n%10" will give the last digit to add then "n/10" will make the number one digit less.
+    }
     
     public static void main(String[] args) {
 
@@ -43,7 +54,14 @@ public class recursion{
        // print(n);
             
 
-           numsum(1,5,0);
+        //    numsum(1,5,0);
+
+      // Find the sum of the digits of a number.
+    
+      int ans = sumOfDigits(1234);
+      int ans2 = productOfDigits(1234);
+        // System.out.println(ans);
+        System.out.println(ans2);
        
            
     }

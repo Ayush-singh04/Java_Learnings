@@ -12,9 +12,9 @@ public class array_sorting {
                 return  array(arr, idx+1);
            }else{
             return false;
-        }
+     }
         
-        }
+ }
     public static void main(String[] args) {
        int arr[] ={1,3,3}; 
         System.out.println( array(arr, 0));
