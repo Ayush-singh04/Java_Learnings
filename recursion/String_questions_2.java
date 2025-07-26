@@ -35,7 +35,7 @@ public class String_questions_2 {
            // if the character does'nt wants to get choosed
                subsequences2(str, idx+1, newString,set);
            }
-            // Print all the permutations of the string "abc"
+            // Print all the tations of the string "abc"
             public static void permutations(String str2, String permutation){
                 if (str2.length()==0) {
                     System.out.println(permutation);
@@ -64,7 +64,7 @@ public class String_questions_2 {
                     // willAdd
                     subset.add(n);
                     findSubset( n-1, subset);
-                    // won't add
+                    // will not add
                     subset.remove(subset.size()-1);
                     findSubset(n-1, subset);
                 }

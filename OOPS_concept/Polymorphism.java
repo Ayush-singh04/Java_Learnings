@@ -58,6 +58,7 @@ public class  Polymorphism{
 
         GPS g = new SmartPhone(); // This method will only check methods of GPS and no other methods out of Gps will be checked
         g.locate();
+        
        // GPS.vdoplay(); -- thorws error.
     }
 }

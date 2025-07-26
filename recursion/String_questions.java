@@ -1,7 +1,7 @@
 package java_learnings.recursion;
 
 public class String_questions {
-       // Write a stirng(abcd) into reversive order(dcba)--
+       // Q1 Write a stirng(abcd) into reversive order(dcba)--
        public static void reversiveStr(String str, int index){
         if (index==0) {
             System.out.println(str.charAt(index));
@@ -10,7 +10,7 @@ public class String_questions {
         System.out.print(str.charAt(index));
             reversiveStr(str, index-1);
      }
-        // Find the first and last  occurence of letter "a" in (abaacdaefaah)--
+        // Q2 Find the first and last  occurence of letter "a" in (abaacdaefaah)--
         public static int first =-1; // intialising  with -1 because positive index already been taken
         public static int last =-1;
 
@@ -30,7 +30,7 @@ public class String_questions {
         }
             occurence(str2, index+1, element);
     }
-        // Move all "x" to the end of the string(axbcxxd)---
+        // Q3 Move all "x" to the end of the string(axbcxxd)---
      public static void moveAllX(String str3, int idx, int count, String newString){
         if (idx == str3.length()) {
             for (int i = 1; i <= count; i++) {
@@ -48,7 +48,8 @@ public class String_questions {
             moveAllX(str3, idx+1, count, newString);
         }
      }
-        // Remove the duplicates from the string (abbccda)---
+     
+        //Q4 Remove the duplicates from the string (abbccda)---
         public static boolean []map = new boolean[26];
      public static void remDupli(String str4, int idx, String newString){
          if (idx == str4.length()){
@@ -65,6 +66,22 @@ public class String_questions {
         }
 
      }
+        // Q5 Remove all the 'a's' from the string
+
+    
+    static void removeWord(String str5 ,int idx , String newString){
+        if (idx == str5.length()) {
+            System.out.println(newString);
+            return;
+        }
+        if (str5.charAt(idx) == 'a') {
+            removeWord(str5, idx + 1, newString);
+        }else{
+           newString = newString + str5.charAt(idx);
+            removeWord(str5, idx + 1, newString);
+        }
+       
+    }
 
     public static void main(String[] args) {
        // String str ="abcd";
@@ -76,9 +93,12 @@ public class String_questions {
       //String str3 = "axbcxxd";
      // moveAllX(str3, 0, 0, "");
 
-      //  String str4 = "abbccda";
-      //  remDupli(str4, 0, "");
+       String str4 = "abbccda";
+       remDupli(str4, 0, "");
 
+      String str5 = "abbccda";
+    //   removeWord(str5, 0 , "");
+      
       
        
     }

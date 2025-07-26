@@ -50,7 +50,7 @@ public class Inheritence{
        // System.out.println(b.getX()); 
        Derived d = new Derived(5,7);
          d.setY(100);
-      // System.out.println(d.getY());
+    //   System.out.println(d.getY());
         
     }
 }

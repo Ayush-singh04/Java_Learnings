@@ -7,7 +7,7 @@ public class N_Oueens {
     /* Make a 4x4 chess board where 4 Queens are placed, Find the no. of ways that all are safe from 
      * each other--- 
      */
-     public boolean isSafe(int row, int col, char[][] board) {
+     static boolean isSafe(int row, int col, char[][] board) {
        //horizontal
        for(int j=0; j<board.length; j++) {
            if(board[row][j] == 'Q') {
@@ -56,7 +56,7 @@ public class N_Oueens {
        return true;
    }
   
-   public void saveBoard(char[][] board, List<List<String>> allBoards) {
+   static void saveBoard(char[][] board, List<List<String>> allBoards) {
        String row = "";
        List<String> newBoard = new ArrayList<>();
       
@@ -74,7 +74,7 @@ public class N_Oueens {
        allBoards.add(newBoard);
    }
   
-   public void helper(char[][] board, List<List<String>> allBoards, int col) {
+   static void helper(char[][] board, List<List<String>> allBoards, int col) {
        if(col == board.length) {
            saveBoard(board, allBoards);
            return;
@@ -89,14 +89,15 @@ public class N_Oueens {
        }
    }
   
-   public List<List<String>> solveNQueens(int n) {
+   static List<List<String>> solveNQueens(int n) {
        List<List<String>> allBoards = new ArrayList<>();
        char[][] board = new char[n][n];
       
        helper(board, allBoards, 0);
        return allBoards;
    }
-
-
+public static void main(String[] args) {
+    System.out.println(solveNQueens(4));
+  }
    
 }
