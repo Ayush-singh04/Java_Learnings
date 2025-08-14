@@ -17,6 +17,34 @@ public class CircularLinkedListFromScratch {
         node.next = head;
         tail = node;
    }
+   public void delete(int val) {
+        Node node = head;
+        if (node == null) {
+            return;
+        }
+
+        if (head == tail){
+            head = null;
+            tail = null;
+            return;
+        }
+
+        if (node.value == val) {
+            head = head.next;
+            tail.next = head;
+            return;
+        }
+
+        do {
+            Node n = node.next;
+            if (n.value == val) {
+                node.next = n.next;
+                break;
+            }
+            node = node.next;
+        } while (node != head);
+
+    }
    public void display(){
     Node curr = head;
     if (head != null) { // We have used do while loop here because we have to print the last element when we reach head again.
@@ -26,6 +54,7 @@ public class CircularLinkedListFromScratch {
       }
       while (curr != head);
     }
+    System.out.println("Head");
    }
 
     private class Node {
@@ -49,6 +78,8 @@ public class CircularLinkedListFromScratch {
                 list.insert(30);
                 list.insert(40);
                 list.insert(50);
+                list.display();
+                list.delete(30);
 
             list.display();
     }
