@@ -1,4 +1,4 @@
-package java_learnings;
+package java_learnings.OtherJavaFiles;
 
 public class NewTest {
 

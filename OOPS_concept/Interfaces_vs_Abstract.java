@@ -5,14 +5,16 @@ package java_learnings.OOPS_concept;
 
         public void speedUp(int increment);
          public void applyBreak(int decrement);
+         void tyreStart();
     }
      interface tools { // Defining tools of cycle
-      void tyre();
+      void tyreStart();
       void seat();
       
       
     }
-    class AvonCycle implements Bycycle{
+    class AvonCycle implements Bycycle , tools{
+     
       public void speedUp(int increment){
         System.out.println("Accelerating UP....!");
       } 
@@ -22,10 +24,10 @@ package java_learnings.OOPS_concept;
       public void Horn(){
         System.out.println("Pee....Peeep!");
       } 
-      void tyre(){
-        System.out.println("My Cycle has MRF tyres.");
+      public void tyreStart(){
+        System.out.println("My Cycle has MRF tyres moving.");
       }
-      void seat(){
+      public void seat(){
         System.out.println("It has two seats.");
       }
     }
@@ -34,9 +36,11 @@ package java_learnings.OOPS_concept;
 public class Interfaces_vs_Abstract{
     public static void main(String[] args){
         AvonCycle avc = new AvonCycle();
+        tools too = new AvonCycle();
         avc.applyBreak(1);
         avc.Horn();
         avc.speedUp(12);
-        avc.tyre();
+        avc.tyreStart();
+        too.tyreStart();
     }
 }

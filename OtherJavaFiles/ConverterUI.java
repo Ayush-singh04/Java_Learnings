@@ -1,4 +1,4 @@
-package java_learnings;
+package java_learnings.OtherJavaFiles;
 class ConverterUI{
 
 public static int fac(int n){
@@ -10,8 +10,7 @@ return n* fac(n-1);
 }
 public static void main(String[] args) {
     
-    // System.out.println(fac(5));
-
+    System.out.println(fac(5));
    
 }
 }
