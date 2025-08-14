@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class String_questions {
        // Q1 Write a stirng(abcd) into reversive order(dcba)--

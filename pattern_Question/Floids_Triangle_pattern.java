@@ -1,4 +1,4 @@
-package java_learnings.pattern_Question;
+package java_learnings.Pattern_Question;
 public class Floids_Triangle_pattern {
     public static void main(String[]args){
              System.out.println(" Floid's Triangle ");

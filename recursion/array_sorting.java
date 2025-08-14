@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class array_sorting {
     // Check whethere this array(1,2,3,4,5) is sorted[Strictly increasing] using recursion---

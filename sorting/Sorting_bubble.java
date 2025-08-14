@@ -1,4 +1,4 @@
-package java_learnings.sorting;
+package java_learnings.Sorting;
 
 public class Sorting_bubble {
     public static void printArr(int arr[]){

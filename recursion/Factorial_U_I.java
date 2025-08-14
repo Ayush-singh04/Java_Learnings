@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 import java.util.Scanner;
 
 public class Factorial_U_I{

@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class path_in_maze {
     // Find the total no. of paths in a maze to move from (0,0) to (n,m)

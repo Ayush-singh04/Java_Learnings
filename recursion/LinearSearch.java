@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class LinearSearch {
     static boolean search(int [] arr , int target , int index){

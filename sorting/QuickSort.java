@@ -1,4 +1,4 @@
-package java_learnings.sorting;
+package java_learnings.Sorting;
 
 public class QuickSort {
      public static int partition(int arr[],int first , int last){

@@ -1,4 +1,4 @@
-package java_learnings.sorting;
+package java_learnings.Sorting;
 
 public class merge_sort {
     /*In mergeSort divide and rule technique work---

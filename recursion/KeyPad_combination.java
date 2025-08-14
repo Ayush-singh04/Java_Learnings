@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class KeyPad_combination {
         // print String combination of "23" in a keypad mobile---

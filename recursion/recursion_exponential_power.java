@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class recursion_exponential_power {
      public static int power(int x,int n){

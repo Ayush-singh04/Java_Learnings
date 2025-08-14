@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class tower_of_hanoi {
     public static void towerOfHanoi(int n ,String src, String helper,String desti ){

@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class callGuest_quest {
     // Find the total no. of ways to call "n" guest in a party whether single or paired---

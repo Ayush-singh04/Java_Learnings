@@ -1,4 +1,4 @@
-package java_learnings.recursion;
+package java_learnings.Recursion;
 
 public class recursion_fibonacci_series {
     public static void Fibonacci(int a,int b, int n){

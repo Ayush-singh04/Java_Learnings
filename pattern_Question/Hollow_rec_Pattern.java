@@ -1,4 +1,4 @@
-package java_learnings.pattern_Question;
+package java_learnings.Pattern_Question;
 public class Hollow_rec_Pattern {
     public static void main(String[]args){
             // Making a Hollow rectangle pattern-
