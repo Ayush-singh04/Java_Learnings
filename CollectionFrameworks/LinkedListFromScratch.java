@@ -22,6 +22,21 @@ public class LinkedListFromScratch {
             }
             size += 1;  
         }
+    // Inserting elements uisng Recursion.
+    public void insertUsingRec(int val , int index){
+
+        head = insertUsingRec(val, index, head);
+    }
+    private Node insertUsingRec(int val , int index , Node node){
+        if (index == 0) {
+            Node temp = new Node(val, node);
+            size++;
+            return temp;
+        }
+
+       node.next = insertUsingRec(val, index-1, node.next);
+       return node;
+    }
     // Inserting The Element at the  Last Position.
         public void insertAtLast(int val){
              if (tail == null) {
@@ -129,6 +144,9 @@ public class LinkedListFromScratch {
             // System.out.println(list.deleteFirst()); // 40 has been removed.
             // System.out.println(list.deleteLast()); // 5 has been removed.
             System.out.println(list.deleteAtIndex(3));
+            list.display();
+
+            list.insertUsingRec(100, 3);
             list.display();
     }
 }
