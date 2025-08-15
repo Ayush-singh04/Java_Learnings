@@ -119,7 +119,24 @@ public class LinkedListFromScratch {
         }
 
 
-    private class Node {
+        // Q1 Remove Duplicates from sorted LinkedList
+
+        public void removeDupli(){
+            Node node = head;
+        
+            while (node.next != null) {
+                if (node.value == node.next.value) {
+                    node.next = node.next.next;
+                    size--;
+                }else{
+                node = node.next;
+                }
+            }
+            tail = node;
+            tail.next = null;
+        }
+
+    public class Node {
        
         private int value ; // Each node in linklist has a value (here it is integer).
         private Node next ; // And the next element will be of Node Data type.
@@ -148,5 +165,19 @@ public class LinkedListFromScratch {
 
             list.insertUsingRec(100, 3);
             list.display();
+
+         // For Question1 
+
+        // list.insertFirst(4);
+        // list.insertFirst(4);
+        // list.insertFirst(3);
+        // list.insertFirst(2);
+        // list.insertFirst(2);
+        // list.insertFirst(1);
+
+        // list.display();
+        // list.removeDupli();
+        // list.display();
+
     }
 }

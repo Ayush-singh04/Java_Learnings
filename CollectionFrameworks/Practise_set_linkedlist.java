@@ -2,6 +2,10 @@ package java_learnings.CollectionFrameworks;
 
 import java.util.LinkedList;
 
+
+
+
+
 public class Practise_set_linkedlist {
     public static void main(String[] args) {
         //Q1- Find the nth Node of a linkedlist from last and delete it.
@@ -18,5 +22,6 @@ public class Practise_set_linkedlist {
             int n = 3;
            list.remove( list.size()-n);
            System.out.println(list);
+
     }
 }
