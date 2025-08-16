@@ -5,13 +5,19 @@ public class LinkedListFromScratch {
         private Node tail ; // Last element of Linklist is a tail which always points to the null.
 
         private int size ;
+        private int value;
+        private LinkedListFromScratch next;
 
     public LinkedListFromScratch(int size) {
             this.size = size;
         }
-
+    
     // Inserting The Element at the  First Position.
         
+        public LinkedListFromScratch() {
+        //TODO Auto-generated constructor stub
+    }
+
         public void insertFirst(int val){
             Node node = new Node(val);
             node.next = head;
@@ -136,6 +142,8 @@ public class LinkedListFromScratch {
             tail.next = null;
         }
 
+    
+       
     public class Node {
        
         private int value ; // Each node in linklist has a value (here it is integer).
@@ -178,6 +186,7 @@ public class LinkedListFromScratch {
         // list.display();
         // list.removeDupli();
         // list.display();
+
 
     }
 }
