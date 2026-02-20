@@ -9,7 +9,7 @@ public class Break_and_continue{
                     if(i==3){
               
                  System.out.println("Process Bounded");
-                    break; // Here after checking if condition the progrm. will break-sdown....
+                    break; // Here after checking if condition the progrm. will break-down....
                 
                } 
            } 

@@ -19,7 +19,7 @@ public class Arrays{
                                                 */
         //3rd-
             int[] marks = {55,56,71,27};
-              System.out.println(marks[0]);
+              System.out.println(marks[0]); 
                  System.out.println(marks.length);
           
             // We can print the all elements of array using for loop...in only one line of code .

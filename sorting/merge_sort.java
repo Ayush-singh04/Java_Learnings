@@ -2,7 +2,7 @@ package java_learnings.Sorting;
 
 public class merge_sort {
     /*In mergeSort divide and rule technique work---
-     * we first divide the big list of data and then sort from last part of the divisoin--
+     * we first divide the big list of data and then sort from last part of the division--
      */
     public static void sorted(int arr[], int Si, int mid, int Ei){
         int merged[] = new int[Ei-Si+1];
