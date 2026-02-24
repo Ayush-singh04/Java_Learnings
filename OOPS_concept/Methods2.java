@@ -22,13 +22,25 @@ public class Methods2 {
         return a+b;
     }
 
+    static boolean isEven(int num){
+        return num%2==0;
+    }
+
     public static void main(String[] args) {
         
-        greetuser();
-        greetuser("ayush"); 
-        System.out.println(greetuser("ayush", 20));
+        // greetuser();
+        // greetuser("ayush"); 
+        // System.out.println(greetuser("ayush", 20));
        
-        System.out.println("your age is "+ userage(25));
-        System.out.println("the sum of 10 and 20 is "+ sum(10,20));
+        // System.out.println("your age is "+ userage(25));
+        // System.out.println("the sum of 10 and 20 is "+ sum(10,20));
+
+        
+        if((isEven(15))){
+            System.out.println("the number is even");
+        }
+        else{
+            System.out.println("the number is odd");
+        }
     }
 }

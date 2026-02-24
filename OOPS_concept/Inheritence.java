@@ -52,5 +52,7 @@ public class Inheritence{
          d.setY(100);
     //   System.out.println(d.getY());
         
+        // Base b = new Derived();
+        
     }
 }
