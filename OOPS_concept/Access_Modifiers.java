@@ -1,14 +1,14 @@
 package java_learnings.OOPS_concept;
 class C1{
-    public int a = 10;
+    public int a = 10;  //Acesed from anywhere)
     protected int b = 20;
-    int c = 30;         // Default Modifier.
+    int c = 30;         // Default Modifier.(Accesed within the same package)
     private int d = 40;
 
     public void meth1(){
         System.out.println(a);
         System.out.println(b);
-        System.out.println(c);
+        System.out.println(c); 
         System.out.println(d);
     }
 }
