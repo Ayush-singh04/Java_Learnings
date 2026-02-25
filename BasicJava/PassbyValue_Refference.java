@@ -1,14 +1,14 @@
 package java_learnings.BasicJava;
 
 public class PassbyValue_Refference {
-    static void change(int a){
-        a = 98; 
-        System.out.println("The value of a after is: "+a); // This will print 98 because it is pass by value.
+    static int change(int num){
+       return num = num + 10; 
+        // System.out.println("The value of a after is: "+a); // This will print 98 because it is pass by value.
     }
 
     public static void main(String[] args) {
-        int a = 45;
+        int a = 5;
         System.out.println("The value of a before changing is: "+a); 
-         change(a);
+         System.out.println("The value of a after changing is: "+change(a)); // This will print 15 because it is pass by value.
     }
 }
