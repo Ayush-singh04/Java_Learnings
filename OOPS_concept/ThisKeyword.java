@@ -12,7 +12,8 @@ public class ThisKeyword {
         System.out.println("My name is: " + name);
     }
     public static void main(String[] args) {
-        ThisKeyword student = new ThisKeyword(05, "Swayush Singh");
+        ThisKeyword student = new ThisKeyword(04, "Ayush Singh");
+        ThisKeyword student1 = new ThisKeyword(05, "Swayush Singh");
             
     }
 }
