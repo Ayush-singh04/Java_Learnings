@@ -5,7 +5,7 @@ public class GarbageCollector {
 
     public void finalize() { // finalize method is called by the garbage collector before it destroys the object.
         count++;
-        // System.out.println("Garbage Collector called " + count + " times");
+        // System.out.println("Jersy Changed " + count + " times");
     }
     public static void main(String[] args) {
         for(int i = 0; i < 10000000; i++) {
