@@ -1,4 +1,4 @@
-package java_learnings.OOPS_concept;
+package java_learnings.GarbageCollection;
 
 public class GarbageCollector2 {
     public void finalize() { // finalize method is called by the garbage collector before it destroys the object.

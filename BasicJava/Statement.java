@@ -1,6 +1,6 @@
 
 package java_learnings.BasicJava;
-public class statemem{
+public class Statement{
         public static void main(String[]args)
     {
     // Here we have tested if else statement.

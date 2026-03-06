@@ -1,7 +1,7 @@
 package java_learnings.BasicJava;
 
 //import java.util.Arrays;
-public class Percentage_finder{
+public class PercentageFinder1{
 
 
 public static void main(String[] args) {

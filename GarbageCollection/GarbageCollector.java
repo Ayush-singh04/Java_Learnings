@@ -1,4 +1,4 @@
-package java_learnings.OOPS_concept;
+package java_learnings.GarbageCollection;
 
 public class GarbageCollector {
     static int count = 0;

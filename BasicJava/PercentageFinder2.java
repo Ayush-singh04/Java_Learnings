@@ -1,7 +1,7 @@
 package java_learnings.BasicJava;
 
 import java.util.Scanner;
-public class Percentage_f{
+public class PercentageFinder2{
     public static void main(String[] args) {
     
         System.out.println("Find The percentage of 5 numbers : ");
