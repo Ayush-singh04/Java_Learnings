@@ -1,6 +1,8 @@
 package java_learnings.OOPS_concept;
 
 interface first{
+    
+
 
     default void greet(){
         System.out.println("It's a default method in the interface..");
