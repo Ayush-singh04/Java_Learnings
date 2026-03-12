@@ -11,7 +11,7 @@ public class Threads_constructor {
         mythr t1 = new mythr("Ayush");
           //Thread Name= new Thread(t1,"Ayush");
          //Name.start();
-        mythr t2 = new mythr("jhonn");
+        mythr t2 = new mythr("Jhonn");
          t1.start();
          t2.start();
         System.out.println("Id-: "+ t1.threadId());
