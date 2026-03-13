@@ -32,10 +32,10 @@ public class generics {
       // int a = (int) arrayList.get(1);
         //  System.out.println(a);
 
-       //  myGeneric<String> str = new myGeneric(240, "It's MyString!");
-         //   String gen = str.getT1();
-          //      System.out.println(gen);
-          //  int value = str.getVal();
-           //     System.out.println(value);
+        myGeneric<String> str = new myGeneric(240, "It's MyString!");
+           String gen = str.getT1();
+               System.out.println(gen);
+           int value = str.getVal();
+               System.out.println(value);
     }
 }
