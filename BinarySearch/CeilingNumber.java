@@ -2,6 +2,11 @@ package java_learnings.BinarySearch;
 
 public class CeilingNumber {
     static int ceiling(int arr[], int target){
+
+        if(target > arr[arr.length-1]){ // If the target is greater than the greatest number in the array, then there is no ceiling for the target in the array.
+            return -1;
+        }
+        
         int s = 0;
         int e = arr.length-1;
 
