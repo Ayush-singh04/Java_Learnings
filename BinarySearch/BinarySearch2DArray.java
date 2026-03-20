@@ -17,7 +17,7 @@ public class BinarySearch2DArray {
                     col -- ;
                 }
             }  
-                 return new int [] {-1 , -1};
+                 return new int [] {-1 , -1} ;
 
     }
      static int [] newSearch(int [][] matrix , int target){
