@@ -18,7 +18,7 @@ public class Seive {
     }
     public static void main(String[] args) {
         // This Question basically means to find the prime numbers till Nth number.
-            int n = 40 ;
+            int n = 20 ;
         boolean[] primes = new boolean[n+1] ; // Arrays Starts from 0 so we have to include one space more than N.
             seive(n , primes);
     }
