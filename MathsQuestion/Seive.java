@@ -10,11 +10,7 @@ public class Seive {
                 }
             }
         }
-        for (int i = 2; i <= n; i++) {
-            if (primes[i] == false) {
-                System.out.print(i + " ");
-            }
-        }
+        
     }
     public static void main(String[] args) {
         // This Question basically means to find the prime numbers till Nth number.
