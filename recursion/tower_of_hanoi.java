@@ -12,6 +12,6 @@ public class tower_of_hanoi {
     }
     public static void main(String[] args) {
         int n=3;
-        towerOfHanoi(n, "S-tower", "H-tower", "D-tower");
+        towerOfHanoi(n, "Source-tower", "Helper-tower", "Destination-tower");
     }
 }
