@@ -128,6 +128,11 @@ POST /api/auth/reset-password
 
 Run `npm run seed` in `backend` to recreate demonstration data.
 
+For a database-free public demo, the frontend production build uses
+`VITE_DEMO_MODE=true` and stores demo accounts, quiz progress, and results in
+browser `localStorage`. This mode is suitable for demonstrations and is not a
+replacement for MongoDB-backed production authentication or shared data.
+
 ## API overview
 
 - `POST /api/auth/register`

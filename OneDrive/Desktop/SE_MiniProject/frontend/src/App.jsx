@@ -11,6 +11,143 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'rec
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api' });
 
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+const demoKey = 'quizarena_demo_state';
+
+function getDemoState() {
+  try {
+    return JSON.parse(localStorage.getItem(demoKey)) || {
+      users: [
+        { id: 'demo-student', name: 'Demo Student', email: 'student@quizarena.com', role: 'student', active: true, points: 240, xp: 340, createdAt: new Date().toISOString() },
+        { id: 'demo-admin', name: 'QuizArena Admin', email: 'admin@quizarena.com', role: 'admin', active: true, points: 0, xp: 0, createdAt: new Date().toISOString() }
+      ],
+      subjects: [
+        { _id: 'java', name: 'Java Programming', description: 'Core Java, OOP, collections, and JVM concepts.', topics: ['Fundamentals', 'OOP', 'Collections'], active: true },
+        { _id: 'python', name: 'Python Programming', description: 'Python syntax, libraries, and problem solving.', topics: ['Fundamentals', 'Functions'], active: true },
+        { _id: 'dsa', name: 'Data Structures and Algorithms', description: 'Arrays, trees, graphs, and complexity.', topics: ['Arrays', 'Trees', 'Graphs'], active: true }
+      ],
+      questions: [
+        { _id: 'q1', subject: { _id: 'java', name: 'Java Programming' }, topic: 'OOP', statement: 'Which keyword is used to inherit a class in Java?', options: [{ text: 'implements', isCorrect: false }, { text: 'extends', isCorrect: true }, { text: 'inherits', isCorrect: false }, { text: 'super', isCorrect: false }], difficulty: 'Easy', explanation: 'extends creates an inheritance relationship.', marks: 2, negativeMarks: 0 },
+        { _id: 'q2', subject: { _id: 'java', name: 'Java Programming' }, topic: 'Collections', statement: 'Which collection does not allow duplicate elements?', options: [{ text: 'ArrayList', isCorrect: false }, { text: 'LinkedList', isCorrect: false }, { text: 'HashSet', isCorrect: true }, { text: 'Vector', isCorrect: false }], difficulty: 'Medium', explanation: 'HashSet is a Set implementation.', marks: 2, negativeMarks: 0 }
+      ],
+      competitions: [
+        { _id: 'java-sprint', title: 'Java Sprint Challenge', subject: { _id: 'java', name: 'Java Programming' }, description: 'Test your Java fundamentals in a timed challenge.', code: 'JAVA25', questions: ['q1', 'q2'], startAt: new Date(Date.now() - 3600000).toISOString(), endAt: new Date(Date.now() + 7 * 86400000).toISOString(), durationMinutes: 20, status: 'Live', published: true, participantCount: 1, difficulty: 'Medium', negativeMarking: false, maxParticipants: 100 },
+        { _id: 'python-cup', title: 'Python Fundamentals Cup', subject: { _id: 'python', name: 'Python Programming' }, description: 'A beginner-friendly Python challenge.', code: 'PYTHON1', questions: [], startAt: new Date(Date.now() + 86400000).toISOString(), endAt: new Date(Date.now() + 3 * 86400000).toISOString(), durationMinutes: 15, status: 'Upcoming', published: true, participantCount: 0, difficulty: 'Easy', negativeMarking: false, maxParticipants: 100 }
+      ],
+      attempts: [],
+      materials: [],
+      announcements: [],
+      certificates: [],
+      bookmarks: []
+    };
+  } catch {
+    localStorage.removeItem(demoKey);
+    return {
+      users: [], subjects: [], questions: [], competitions: [],
+      attempts: [], materials: [], announcements: [], certificates: [], bookmarks: []
+    };
+  }
+}
+
+function saveDemoState(state) {
+  localStorage.setItem(demoKey, JSON.stringify(state));
+}
+
+if (DEMO_MODE) {
+  api.interceptors.response.use(
+    response => response,
+    async error => {
+      const config = error.config || {};
+      const url = String(config.url || '');
+      const method = String(config.method || 'get').toLowerCase();
+      const state = getDemoState();
+      const payload = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : (config.data || {});
+      const currentUser = JSON.parse(localStorage.getItem('quizarena_user') || '{}');
+
+      if (method === 'post' && url.endsWith('/auth/login')) {
+        const user = state.users.find(item => item.email.toLowerCase() === String(payload.email || '').toLowerCase());
+        if (!user || !['Admin@123', 'Student@123'].includes(payload.password)) throw { response: { data: { message: 'Use the demo account credentials shown below.' } } };
+        if (!user.active) throw { response: { data: { message: 'This demo account is inactive.' } } };
+        localStorage.setItem('quizarena_token', 'demo-token');
+        localStorage.setItem('quizarena_user', JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role, points: user.points }));
+        return { data: { token: 'demo-token', user: { id: user.id, name: user.name, email: user.email, role: user.role, points: user.points } } };
+      }
+      if (method === 'post' && url.endsWith('/auth/register')) {
+        if (!payload.name || !payload.email || payload.password !== payload.confirmPassword) throw { response: { data: { message: 'Complete all fields and ensure passwords match.' } } };
+        if (payload.password.length < 8) throw { response: { data: { message: 'Password must be at least 8 characters.' } } };
+        if (state.users.some(user => user.email.toLowerCase() === payload.email.toLowerCase())) throw { response: { data: { message: 'Email is already registered.' } } };
+        state.users.push({ id: `demo-${Date.now()}`, name: payload.name, email: payload.email.toLowerCase(), role: 'student', active: true, points: 0, xp: 0, createdAt: new Date().toISOString() });
+        saveDemoState(state);
+        return { data: { message: 'Registration successful' } };
+      }
+      if (method === 'post' && url.endsWith('/auth/forgot-password')) return { data: { message: 'Demo reset links are not required. Use the demo login or reset locally.' } };
+      if (method === 'post' && url.endsWith('/auth/reset-password')) return { data: { message: 'Demo password reset is handled locally.' } };
+
+      if (method === 'put' && url.endsWith('/auth/profile')) {
+        const stateUser = state.users.find(user => user.email === currentUser.email);
+        if (stateUser) stateUser.name = payload.name || stateUser.name;
+        saveDemoState(state);
+        return { data: { user: { ...currentUser, name: payload.name || currentUser.name } } };
+      }
+      if (method === 'put' && url.endsWith('/auth/change-password')) return { data: { message: 'Password changed in demo mode.' } };
+
+      if (url.endsWith('/public/home')) return { data: {
+        subjects: state.subjects,
+        competitions: state.competitions,
+        leaderboard: [{ id: 'demo-1', name: 'Demo Champion', score: 920, competitions: 8 }, { id: 'demo-2', name: 'Demo Scholar', score: 860, competitions: 7 }, { id: 'demo-3', name: 'Demo Learner', score: 810, competitions: 6 }]
+      } };
+      if (url.endsWith('/subjects')) return { data: { subjects: state.subjects.filter(subject => subject.active !== false) } };
+      if (url.endsWith('/practice/questions')) return { data: { questions: state.questions } };
+      if (url.endsWith('/competitions') && method === 'get') return { data: { competitions: state.competitions } };
+      if (url.endsWith('/leaderboard')) return { data: { leaderboard: state.users.filter(user => user.role === 'student').map((user, index) => ({ rank: index + 1, id: user.id, name: user.name, points: user.points, competitions: state.attempts.filter(attempt => attempt.userId === user.id).length, averageScore: 75 })) } };
+      if (url.endsWith('/results')) return { data: { results: state.attempts.filter(attempt => currentUser.role === 'admin' || attempt.userId === currentUser.id) } };
+      if (url.endsWith('/dashboard')) return { data: {
+        stats: { attempted: state.attempts.length, averageScore: 75, points: currentUser.points || 240, accuracy: 75, xp: currentUser.role === 'student' ? 340 : 0, level: 2, rank: 1, competitions: state.attempts.length },
+        recentAttempts: state.attempts.slice(-5).reverse(),
+        upcomingCompetitions: state.competitions.filter(item => item.status !== 'Completed').slice(0, 5),
+        subjectProgress: [{ subject: 'Java Programming', attempts: state.attempts.length, progress: 75 }],
+        recommendedLearning: [],
+        achievements: ['Demo Learner']
+      } };
+      if (url.endsWith('/admin/stats')) return { data: { students: state.users.filter(user => user.role === 'student').length, subjects: state.subjects.length, questions: state.questions.length, competitions: state.competitions.length, attempts: state.attempts.length, participants: state.attempts.length, averagePerformance: 75 } };
+      if (url.endsWith('/admin/users')) return { data: { users: state.users } };
+      if (url.endsWith('/admin/questions')) return { data: { questions: state.questions } };
+      if (url.endsWith('/admin/competitions')) return { data: { competitions: state.competitions } };
+      if (url.endsWith('/admin/learning')) return { data: { materials: state.materials } };
+      if (url.endsWith('/admin/announcements')) return { data: { announcements: state.announcements } };
+      if (url.endsWith('/learning')) return { data: { materials: state.materials } };
+      if (url.endsWith('/announcements')) return { data: { announcements: state.announcements } };
+      if (url.endsWith('/daily-challenge')) return { data: { challenge: { id: 'daily-demo', dateKey: new Date().toISOString().slice(0, 10), durationMinutes: 10, questions: state.questions.map(question => ({ _id: question._id, statement: question.statement, options: question.options.map(option => ({ text: option.text })) })) }, attempted: false, result: null } };
+      if (url.endsWith('/certificates')) return { data: { certificates: state.certificates } };
+      if (url.endsWith('/auth/me')) return { data: { user: currentUser } };
+
+      if (method === 'post' && url.includes('/competitions/') && url.endsWith('/join')) return { data: { message: 'Competition joined in demo mode' } };
+      if (method === 'post' && url.includes('/competitions/') && url.endsWith('/start')) {
+        const id = url.split('/').filter(Boolean).at(-2);
+        const competition = state.competitions.find(item => item._id === id) || state.competitions[0];
+        const questions = state.questions.filter(question => competition.questions.includes(question._id));
+        return { data: { attemptId: `demo-attempt-${Date.now()}`, deadlineAt: new Date(Date.now() + competition.durationMinutes * 60000).toISOString(), questions: questions.map(question => ({ _id: question._id, statement: question.statement, marks: question.marks, options: question.options.map(option => ({ text: option.text, originalIndex: question.options.indexOf(option) })) })) } };
+      }
+      if (method === 'post' && url.includes('/attempts/') && url.endsWith('/submit')) {
+        let score = 0, correct = 0, incorrect = 0;
+        const answers = payload.answers || [];
+        for (const answer of answers) {
+          const question = state.questions.find(item => item._id === answer.question);
+          if (question && Number.isInteger(answer.selectedOption) && question.options[answer.selectedOption]?.isCorrect) { score += question.marks || 1; correct++; }
+          else if (question && answer.selectedOption !== null) incorrect++;
+        }
+        const maxScore = answers.length ? state.questions.slice(0, answers.length).reduce((sum, question) => sum + (question.marks || 1), 0) : 4;
+        const unattempted = Math.max(0, maxScore - correct - incorrect);
+        state.attempts.push({ _id: `demo-result-${Date.now()}`, userId: currentUser.id, title: 'Java Sprint Challenge', competition: { title: 'Java Sprint Challenge' }, score, maxScore, correct, incorrect, unattempted, accuracy: Math.round(correct / Math.max(1, correct + incorrect) * 100), submittedAt: new Date().toISOString() });
+        saveDemoState(state);
+        return { data: { message: 'Submitted successfully', result: { score, maxScore, correct, incorrect, unattempted, accuracy: Math.round(correct / Math.max(1, correct + incorrect) * 100), timeTakenMinutes: 1 } } };
+      }
+
+      return Promise.reject(error);
+    }
+  );
+}
+
 function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   useEffect(() => {
@@ -58,7 +195,18 @@ function Landing({ theme, setTheme }) {
   const navigate = useNavigate();
   const [home, setHome] = useState({ subjects: [], competitions: [], leaderboard: [] });
   const [mobileOpen, setMobileOpen] = useState(false);
-  useEffect(() => { api.get('/public/home').then(r => setHome(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    if (DEMO_MODE) {
+      const demo = getDemoState();
+      setHome({
+        subjects: demo.subjects,
+        competitions: demo.competitions,
+        leaderboard: [{ id: 'demo-1', name: 'Demo Champion', score: 920, competitions: 8 }, { id: 'demo-2', name: 'Demo Scholar', score: 860, competitions: 7 }]
+      });
+      return;
+    }
+    api.get('/public/home').then(r => setHome(r.data)).catch(() => {});
+  }, []);
   const subjectCatalog = [
     { name: 'Java', fullName: 'Java Programming', description: 'Object-oriented programming, collections, and JVM fundamentals.' },
     { name: 'Python', fullName: 'Python Programming', description: 'Syntax, data types, automation, and problem-solving.' },
@@ -169,7 +317,30 @@ function AuthPage({ mode }) {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === 'register') {
+      if (DEMO_MODE && mode === 'login') {
+        const demo = getDemoState();
+        const user = demo.users.find(item => item.email.toLowerCase() === form.email.toLowerCase());
+        const valid = user && ((user.role === 'admin' && form.password === 'Admin@123') || (user.role === 'student' && form.password === 'Student@123'));
+        if (!valid) throw { response: { data: { message: 'Use the demo credentials shown below.' } } };
+        localStorage.setItem('quizarena_token', 'demo-token');
+        localStorage.setItem('quizarena_user', JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role, points: user.points }));
+        toast.success(`Welcome back, ${user.name}`);
+        navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+      } else if (DEMO_MODE && mode === 'register') {
+        if (!form.name || !form.email || !form.password || form.password !== form.confirmPassword) throw { response: { data: { message: 'Complete all fields and ensure passwords match.' } } };
+        if (form.password.length < 8) throw { response: { data: { message: 'Password must be at least 8 characters.' } } };
+        const demo = getDemoState();
+        if (demo.users.some(user => user.email.toLowerCase() === form.email.toLowerCase())) throw { response: { data: { message: 'Email is already registered.' } } };
+        demo.users.push({ id: `demo-${Date.now()}`, name: form.name, email: form.email.toLowerCase(), role: 'student', active: true, points: 0, xp: 0, createdAt: new Date().toISOString() });
+        saveDemoState(demo);
+        toast.success('Account created successfully');
+        navigate('/login');
+      } else if (DEMO_MODE && mode === 'forgot') {
+        toast.success('Demo reset complete. Use the demo password shown on the login page.');
+      } else if (DEMO_MODE && mode === 'reset') {
+        toast.success('Demo password reset complete.');
+        navigate('/login');
+      } else if (mode === 'register') {
         await api.post('/auth/register', form);
         toast.success('Account created successfully');
         navigate('/login');
@@ -194,6 +365,7 @@ function AuthPage({ mode }) {
   return (
     <main className="auth-page"><div className="auth-aside"><button className="brand light-brand" onClick={() => navigate('/')}><span className="brand-mark"><BrainCircuit size={22} /></span>QuizArena</button><div><span>LEARN. COMPETE. ACHIEVE.</span><h1>Make every question count.</h1><p>Join competitions, sharpen your skills, and see how far you can go.</p></div></div>
       <div className="auth-form-wrap"><form className="auth-form" onSubmit={submit}><div className="auth-heading"><h2>{mode === 'login' ? 'Welcome back' : mode === 'register' ? 'Create your account' : mode === 'forgot' ? 'Forgot password' : 'Reset password'}</h2><p>{mode === 'login' ? 'Enter your details to continue.' : mode === 'register' ? 'Start your QuizArena journey today.' : mode === 'forgot' ? 'Enter your account email.' : 'Choose a new password.'}</p></div>
+        {DEMO_MODE && mode === 'login' && <div className="demo-login-note"><strong>Demo credentials</strong><span>Student: student@quizarena.com / Student@123</span><span>Admin: admin@quizarena.com / Admin@123</span></div>}
         {mode === 'register' && <label>Full name<input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Your full name" /></label>}
         {(mode === 'login' || mode === 'register' || mode === 'forgot') && <label>Email address<input required type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="you@example.com" /></label>}
         {(mode === 'login' || mode === 'register' || mode === 'reset') && <label>Password<input required type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="At least 8 characters" /></label>}
@@ -221,6 +393,29 @@ function Dashboard({ theme, setTheme, page = 'dashboard' }) {
     }
     if (page.startsWith('admin') && !isAdmin) {
       navigate('/dashboard');
+      return;
+    }
+    if (DEMO_MODE) {
+      const demo = getDemoState();
+      if (page === 'competitions') setData({ competitions: demo.competitions });
+      else if (page === 'practice') setData({ questions: demo.questions });
+      else if (page === 'leaderboard') setData({ leaderboard: demo.users.filter(user => user.role === 'student').map((user, index) => ({ rank: index + 1, id: user.id, name: user.name, points: user.points, competitions: 0, averageScore: 75 })) });
+      else if (page === 'results') setData({ results: demo.attempts });
+      else if (page === 'admin') setData({ students: demo.users.filter(user => user.role === 'student').length, subjects: demo.subjects.length, questions: demo.questions.length, competitions: demo.competitions.length, attempts: demo.attempts.length });
+      else if (page === 'admin-users') setData({ users: demo.users });
+      else if (page === 'admin-questions') setData({ questions: demo.questions });
+      else if (page === 'admin-competitions') setData({ competitions: demo.competitions });
+      else if (page === 'admin-subjects') setData({ subjects: demo.subjects });
+      else if (page === 'admin-learning') setData({ materials: demo.materials });
+      else if (page === 'admin-announcements') setData({ announcements: demo.announcements });
+      else if (page === 'learning') setData({ materials: demo.materials });
+      else if (page === 'certificates') setData({ certificates: demo.certificates });
+      else setData({
+        stats: { attempted: demo.attempts.length, averageScore: 75, points: user.points || 240, accuracy: 75, xp: 340, level: 2, rank: 1, competitions: demo.attempts.length },
+        recentAttempts: demo.attempts,
+        upcomingCompetitions: demo.competitions.filter(item => item.status !== 'Completed')
+      });
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -344,6 +539,12 @@ function Competitions({ data }) {
   const join = async competition => {
     const code = window.prompt(`Enter the code for ${competition.title}`);
     if (!code) return;
+    if (DEMO_MODE) {
+      if (code.trim().toUpperCase() !== competition.code) { toast.error('Invalid competition code'); return; }
+      toast.success('Competition joined');
+      if (competition.status === 'Live') navigate(`/quiz/${competition._id}`);
+      return;
+    }
     try {
       await api.post(`/competitions/${competition._id}/join`, { code }, { headers: tokenHeaders() });
       toast.success('Competition joined');
