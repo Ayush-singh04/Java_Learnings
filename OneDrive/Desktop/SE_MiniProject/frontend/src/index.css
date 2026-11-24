@@ -94,6 +94,13 @@ button { cursor: pointer; }
 .competition-card p { color: var(--text); line-height: 1.5; }
 .competition-meta { display: flex; flex-wrap: wrap; gap: 14px; color: var(--text); font-size: 13px; margin: 18px 0; }
 .competition-card > button { width: 100%; }
+.test-code-form { max-width: 620px; margin-bottom: 22px; }
+.test-code-form > label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 700; }
+.test-code-form > div { display: flex; gap: 10px; }
+.test-code-form input { flex: 1; min-width: 0; height: 42px; border: 1px solid var(--border); border-radius: 9px; padding: 0 12px; background: var(--surface); color: var(--heading); text-transform: uppercase; }
+.test-code-display { margin-top: 8px !important; }
+.test-code-display strong { color: var(--primary); letter-spacing: 1px; }
+.admin-list-row .test-code-display .text-btn { display: inline-flex; height: auto; padding: 0 4px; font-size: 12px; }
 .empty-card { padding: 40px; border: 1px dashed var(--border); background: var(--surface); border-radius: 16px; color: var(--text); text-align: center; }
 .mobile-menu-button { display: none; }
 .leaderboard-preview { padding: 70px 0 90px; }
@@ -166,5 +173,6 @@ button { cursor: pointer; }
 }
 @media(max-width:600px){
   .admin-form-layout { grid-template-columns:minmax(0,1fr); }.admin-form-grid,.checkbox-grid { grid-template-columns:1fr; }.admin-list-row { align-items:flex-start; flex-direction:column; }.admin-form-actions { flex-wrap:wrap; }.competition-admin-layout { min-width:0; }
+  .test-code-form > div { align-items:stretch; flex-direction:column; }
   .shell{width:calc(100% - 24px)}.nav{height:68px}.hero h1{font-size:38px}.hero-visual{height:360px}.orbit-one{width:320px;height:320px}.orbit-two{width:250px;height:250px}.quiz-card{width:min(310px,90%)}.floating-score{right:0}.subject-grid,.competition-grid,.competition-grid.large{grid-template-columns:1fr}.leaderboard-preview-grid,.how-grid,.team-grid{grid-template-columns:1fr}.section-heading{align-items:start}.text-btn{display:none}.subject-card p{min-height:auto}.competitions-section,.subjects,.leaderboard-preview,.how-section,.team-section{padding:50px 0}.leaderboard-preview-card{grid-template-columns:42px 1fr auto}.leaderboard-preview-card strong{grid-column:3}.footer-inner{grid-template-columns:1fr 1fr;gap:24px}.footer-brand{grid-column:1/-1}.footer-bottom{gap:12px;align-items:flex-start;flex-direction:column;justify-content:center}.auth-page{display:block}.auth-form-wrap{min-height:100vh}.dashboard-header{padding:0 14px}.header-search{display:none}.dashboard-content{padding:24px 14px}.page-heading{align-items:start}.page-heading .btn-primary{display:none}.page-heading h1{font-size:27px}.stat-grid{grid-template-columns:1fr 1fr}.stat-card{padding:12px}.stat-card strong{font-size:20px}.result-grid{grid-template-columns:1fr}.quiz-page header{padding:0 12px}.quiz-page .brand{font-size:0}.quiz-layout{grid-template-columns:1fr}.quiz-layout aside{position:sticky;top:76px;border-right:0;border-bottom:1px solid var(--border);padding:10px 14px}.palette{grid-template-columns:repeat(10,1fr)}.palette button{width:32px;height:32px}.question-panel{width:calc(100% - 24px);margin:24px auto}.result-summary{grid-template-columns:repeat(2,1fr)}
 }

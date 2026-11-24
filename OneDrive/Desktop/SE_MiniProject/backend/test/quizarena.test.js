@@ -5,6 +5,8 @@ import bcrypt from 'bcryptjs';
 import request from 'supertest';
 import { app } from '../src/server.js';
 import { User, Subject, Question, Competition, Attempt, DailyAttempt, Certificate, DailyChallenge } from '../src/models.js';
+import { ensureSampleQuestionBank } from '../src/sampleData.js';
+import { sampleSubjects } from '../src/sampleQuestions.js';
 
 let mongo;
 let admin;
@@ -64,6 +66,17 @@ describe('authentication and authorization', () => {
 });
 
 describe('competition and question management', () => {
+  it('creates a shared sample question bank without duplicating questions on repeat runs', async () => {
+    await ensureSampleQuestionBank();
+    await ensureSampleQuestionBank();
+    expect(await Question.countDocuments()).toBe(50);
+    expect(await Subject.countDocuments({ name: { $in: sampleSubjects.map(item => item.name) } })).toBe(8);
+    const bank = await request(app).get('/api/admin/questions').set('Authorization', `Bearer ${adminToken}`);
+    const practice = await request(app).get('/api/practice/questions').set('Authorization', `Bearer ${studentToken}`);
+    expect(bank.body.questions).toHaveLength(50);
+    expect(practice.body.questions).toHaveLength(50);
+  });
+
   it('allows an administrator to create an MCQ and competition', async () => {
     const question = await request(app).post('/api/admin/questions').set('Authorization', `Bearer ${adminToken}`).send({
       subject: subject._id, topic: 'Basics', statement: 'Which keyword creates a subclass?',
@@ -92,6 +105,36 @@ describe('competition and question management', () => {
 });
 
 describe('quiz security and grading', () => {
+  it('lets an admin start a scheduled test and a student join and submit it with the shared code', async () => {
+    const question = await Question.create({
+      subject: subject._id, statement: 'What is 2 + 2?',
+      options: [{ text: '3', isCorrect: false }, { text: '4', isCorrect: true }, { text: '5', isCorrect: false }, { text: '6', isCorrect: false }],
+      marks: 1
+    });
+    const competition = await Competition.create({
+      title: 'Ready to Start', subject: subject._id, code: 'START1',
+      questions: [question._id], startAt: new Date(Date.now() + 3600000),
+      endAt: new Date(Date.now() + 7200000), durationMinutes: 20,
+      published: false, status: 'Upcoming'
+    });
+
+    const activated = await request(app).post(`/api/admin/competitions/${competition._id}/activate`).set('Authorization', `Bearer ${adminToken}`);
+    expect(activated.status).toBe(200);
+    expect(activated.body.competition.code).toBe('START1');
+
+    const listed = await request(app).get('/api/competitions').set('Authorization', `Bearer ${studentToken}`);
+    expect(listed.body.competitions[0]).not.toHaveProperty('code');
+    const joined = await request(app).post('/api/competitions/join-by-code').set('Authorization', `Bearer ${studentToken}`).send({ code: ' start1 ' });
+    expect(joined.status).toBe(200);
+    const started = await request(app).post(`/api/competitions/${competition._id}/start`).set('Authorization', `Bearer ${studentToken}`).send({});
+    expect(started.status).toBe(200);
+    const submitted = await request(app).post(`/api/attempts/${started.body.attemptId}/submit`).set('Authorization', `Bearer ${studentToken}`).send({
+      answers: [{ question: question._id, selectedOption: 1 }], manual: true
+    });
+    expect(submitted.status).toBe(200);
+    expect(submitted.body.result).toMatchObject({ score: 1, correct: 1, unattempted: 0 });
+  });
+
   it('does not expose correct answers and prevents cross-user attempt access', async () => {
     const question = await Question.create({ subject: subject._id, statement: 'A test', options: [{ text: 'Right', isCorrect: true }, { text: 'Wrong', isCorrect: false }, { text: 'No', isCorrect: false }, { text: 'No', isCorrect: false }], marks: 2, negativeMarks: 1 });
     const competition = await Competition.create({ title: 'Live Test', subject: subject._id, code: 'TEST1', questions: [question._id], startAt: new Date(Date.now() - 60000), endAt: new Date(Date.now() + 3600000), durationMinutes: 30, published: true, negativeMarking: true });

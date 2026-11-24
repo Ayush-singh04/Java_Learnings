@@ -39,6 +39,8 @@ MongoDB    Users, subjects, questions, competitions, attempts,
 - Student dashboard with real MongoDB statistics.
 - Competition listing, joining, timed attempts, answer saving, review marking, submission, and results.
 - Admin competition and MCQ management.
+- A 50-question sample bank spanning Java, Python, data structures, databases, web development, operating systems, networking, and aptitude. Missing sample subjects/questions are added safely when the API starts.
+- Administrators can start a scheduled test from the competition list, then share its private entry code with students.
 - Admin user, subject, learning, announcement, result, and question management.
 - Practice mode and learning materials.
 - Global, weekly, monthly, and subject-capable leaderboard data.
@@ -126,12 +128,13 @@ POST /api/auth/reset-password
 - Admin: `admin@quizarena.com` / `Admin@123`
 - Student: `student@quizarena.com` / `Student@123`
 
-Run `npm run seed` in `backend` to recreate demonstration data.
+Run `npm run seed` in `backend` to recreate demonstration data. This command clears existing demo collections; production deployments add any missing sample questions on API startup without deleting existing data.
 
-For a database-free public demo, the frontend production build uses
+For a database-free, single-browser demo, the frontend production build uses
 `VITE_DEMO_MODE=true` and stores demo accounts, quiz progress, and results in
-browser `localStorage`. This mode is suitable for demonstrations and is not a
-replacement for MongoDB-backed production authentication or shared data.
+browser `localStorage`. This mode is suitable for demonstrations on the same
+browser and is not a replacement for MongoDB-backed authentication or data
+shared across different devices.
 
 ## API overview
 
@@ -144,6 +147,7 @@ replacement for MongoDB-backed production authentication or shared data.
 - `PUT /api/auth/change-password`
 - `GET /api/dashboard`
 - `GET /api/competitions`
+- `POST /api/competitions/join-by-code`
 - `POST /api/competitions/:id/join`
 - `POST /api/competitions/:id/start`
 - `PUT /api/attempts/:id/progress`
@@ -156,6 +160,7 @@ replacement for MongoDB-backed production authentication or shared data.
 - `GET /api/announcements`
 - `GET /api/certificates`
 - Admin question, subject, learning, announcement, competition, and user management routes require an administrator JWT.
+- `POST /api/admin/competitions/:id/activate` starts a quiz immediately and returns its student entry code.
 
 ## Testing
 

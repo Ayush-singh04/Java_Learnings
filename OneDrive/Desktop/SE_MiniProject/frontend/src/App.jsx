@@ -1,13 +1,14 @@
-import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { BrowserRouter, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
 import {
   Activity, Award, BarChart3, Bell, BookOpen, BrainCircuit, ChevronRight, Code2,
-  Crown, Database, Globe2, LayoutDashboard, LogOut, Menu, Moon, Settings, Shield,
+  Crown, Database, LayoutDashboard, LogOut, Menu, Moon, Settings,
   Sun, Trophy, Users, X
 } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { sampleQuestions, sampleSubjects } from './sampleQuestions.js';
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api' });
 
@@ -16,23 +17,23 @@ const demoKey = 'quizarena_demo_state';
 
 function getDemoState() {
   try {
-    return JSON.parse(localStorage.getItem(demoKey)) || {
+    const defaults = {
       users: [
         { id: 'demo-student', name: 'Demo Student', email: 'student@quizarena.com', role: 'student', active: true, points: 240, xp: 340, createdAt: new Date().toISOString() },
         { id: 'demo-admin', name: 'QuizArena Admin', email: 'admin@quizarena.com', role: 'admin', active: true, points: 0, xp: 0, createdAt: new Date().toISOString() }
       ],
-      subjects: [
-        { _id: 'java', name: 'Java Programming', description: 'Core Java, OOP, collections, and JVM concepts.', topics: ['Fundamentals', 'OOP', 'Collections'], active: true },
-        { _id: 'python', name: 'Python Programming', description: 'Python syntax, libraries, and problem solving.', topics: ['Fundamentals', 'Functions'], active: true },
-        { _id: 'dsa', name: 'Data Structures and Algorithms', description: 'Arrays, trees, graphs, and complexity.', topics: ['Arrays', 'Trees', 'Graphs'], active: true }
-      ],
-      questions: [
-        { _id: 'q1', subject: { _id: 'java', name: 'Java Programming' }, topic: 'OOP', statement: 'Which keyword is used to inherit a class in Java?', options: [{ text: 'implements', isCorrect: false }, { text: 'extends', isCorrect: true }, { text: 'inherits', isCorrect: false }, { text: 'super', isCorrect: false }], difficulty: 'Easy', explanation: 'extends creates an inheritance relationship.', marks: 2, negativeMarks: 0 },
-        { _id: 'q2', subject: { _id: 'java', name: 'Java Programming' }, topic: 'Collections', statement: 'Which collection does not allow duplicate elements?', options: [{ text: 'ArrayList', isCorrect: false }, { text: 'LinkedList', isCorrect: false }, { text: 'HashSet', isCorrect: true }, { text: 'Vector', isCorrect: false }], difficulty: 'Medium', explanation: 'HashSet is a Set implementation.', marks: 2, negativeMarks: 0 }
-      ],
+      subjects: sampleSubjects.map((subject, index) => ({ ...subject, _id: `sample-subject-${index + 1}`, active: true })),
+      questions: sampleQuestions.map((question, index) => ({
+        ...question,
+        _id: `sample-question-${index + 1}`,
+        subject: { _id: `sample-subject-${sampleSubjects.findIndex(subject => subject.name === question.subject) + 1}`, name: question.subject },
+        options: question.options.map((text, optionIndex) => ({ text, isCorrect: optionIndex === question.answer })),
+        marks: 1,
+        negativeMarks: 0
+      })),
       competitions: [
-        { _id: 'java-sprint', title: 'Java Sprint Challenge', subject: { _id: 'java', name: 'Java Programming' }, description: 'Test your Java fundamentals in a timed challenge.', code: 'JAVA25', questions: ['q1', 'q2'], startAt: new Date(Date.now() - 3600000).toISOString(), endAt: new Date(Date.now() + 7 * 86400000).toISOString(), durationMinutes: 20, status: 'Live', published: true, participantCount: 1, difficulty: 'Medium', negativeMarking: false, maxParticipants: 100 },
-        { _id: 'python-cup', title: 'Python Fundamentals Cup', subject: { _id: 'python', name: 'Python Programming' }, description: 'A beginner-friendly Python challenge.', code: 'PYTHON1', questions: [], startAt: new Date(Date.now() + 86400000).toISOString(), endAt: new Date(Date.now() + 3 * 86400000).toISOString(), durationMinutes: 15, status: 'Upcoming', published: true, participantCount: 0, difficulty: 'Easy', negativeMarking: false, maxParticipants: 100 }
+        { _id: 'java-sprint', title: 'Java Sprint Challenge', subject: { _id: 'sample-subject-1', name: 'Java Programming' }, description: 'Test your Java fundamentals in a timed challenge.', code: 'JAVA25', questions: sampleQuestions.map((question, index) => question.subject === 'Java Programming' ? `sample-question-${index + 1}` : null).filter(Boolean), participants: ['demo-student'], startAt: new Date(Date.now() - 3600000).toISOString(), endAt: new Date(Date.now() + 7 * 86400000).toISOString(), durationMinutes: 20, status: 'Live', published: true, participantCount: 1, difficulty: 'Medium', negativeMarking: false, maxParticipants: 100 },
+        { _id: 'python-cup', title: 'Python Fundamentals Cup', subject: { _id: 'sample-subject-2', name: 'Python Programming' }, description: 'A beginner-friendly Python challenge.', code: 'PYTHON1', questions: sampleQuestions.map((question, index) => question.subject === 'Python Programming' ? `sample-question-${index + 1}` : null).filter(Boolean), participants: [], startAt: new Date(Date.now() + 86400000).toISOString(), endAt: new Date(Date.now() + 3 * 86400000).toISOString(), durationMinutes: 15, status: 'Upcoming', published: true, participantCount: 0, difficulty: 'Easy', negativeMarking: false, maxParticipants: 100 }
       ],
       attempts: [],
       materials: [],
@@ -40,10 +41,28 @@ function getDemoState() {
       certificates: [],
       bookmarks: []
     };
+    const saved = JSON.parse(localStorage.getItem(demoKey));
+    if (!saved) return defaults;
+    return {
+      ...defaults,
+      ...saved,
+      subjects: [...(saved.subjects || []), ...defaults.subjects.filter(subject => !(saved.subjects || []).some(item => item.name === subject.name))],
+      questions: [...(saved.questions || []), ...defaults.questions.filter(question => !(saved.questions || []).some(item => item.statement === question.statement))],
+      competitions: saved.competitions || defaults.competitions
+    };
   } catch {
     localStorage.removeItem(demoKey);
     return {
-      users: [], subjects: [], questions: [], competitions: [],
+      users: [], subjects: sampleSubjects.map((subject, index) => ({ ...subject, _id: `sample-subject-${index + 1}`, active: true })),
+      questions: sampleQuestions.map((question, index) => ({
+        ...question,
+        _id: `sample-question-${index + 1}`,
+        subject: { _id: `sample-subject-${sampleSubjects.findIndex(subject => subject.name === question.subject) + 1}`, name: question.subject },
+        options: question.options.map((text, optionIndex) => ({ text, isCorrect: optionIndex === question.answer })),
+        marks: 1,
+        negativeMarks: 0
+      })),
+      competitions: [],
       attempts: [], materials: [], announcements: [], certificates: [], bookmarks: []
     };
   }
@@ -54,6 +73,11 @@ function saveDemoState(state) {
 }
 
 if (DEMO_MODE) {
+  api.defaults.adapter = async config => {
+    const error = new Error('Using local demo data');
+    error.config = config;
+    throw error;
+  };
   api.interceptors.response.use(
     response => response,
     async error => {
@@ -93,14 +117,28 @@ if (DEMO_MODE) {
 
       if (url.endsWith('/public/home')) return { data: {
         subjects: state.subjects,
-        competitions: state.competitions,
+        competitions: state.competitions.map(competition => {
+          const publicCompetition = { ...competition };
+          delete publicCompetition.code;
+          return publicCompetition;
+        }),
         leaderboard: [{ id: 'demo-1', name: 'Demo Champion', score: 920, competitions: 8 }, { id: 'demo-2', name: 'Demo Scholar', score: 860, competitions: 7 }, { id: 'demo-3', name: 'Demo Learner', score: 810, competitions: 6 }]
       } };
       if (url.endsWith('/subjects')) return { data: { subjects: state.subjects.filter(subject => subject.active !== false) } };
-      if (url.endsWith('/practice/questions')) return { data: { questions: state.questions } };
-      if (url.endsWith('/competitions') && method === 'get') return { data: { competitions: state.competitions } };
+      if (url.endsWith('/practice/questions')) {
+        const questions = state.questions.filter(question =>
+          (!config.params?.subject || String(question.subject?._id || question.subject) === String(config.params.subject))
+          && (!config.params?.difficulty || question.difficulty === config.params.difficulty)
+        );
+        return { data: { questions: questions.slice(0, 50) } };
+      }
+      if (url.endsWith('/competitions') && !url.includes('/admin/') && method === 'get') return { data: { competitions: state.competitions.map(competition => {
+        const publicCompetition = { ...competition, participantCount: competition.participants?.length || 0 };
+        delete publicCompetition.code;
+        return publicCompetition;
+      }) } };
       if (url.endsWith('/leaderboard')) return { data: { leaderboard: state.users.filter(user => user.role === 'student').map((user, index) => ({ rank: index + 1, id: user.id, name: user.name, points: user.points, competitions: state.attempts.filter(attempt => attempt.userId === user.id).length, averageScore: 75 })) } };
-      if (url.endsWith('/results')) return { data: { results: state.attempts.filter(attempt => currentUser.role === 'admin' || attempt.userId === currentUser.id) } };
+      if (url.endsWith('/results')) return { data: { results: state.attempts.filter(attempt => currentUser.role === 'admin' || attempt.userId === currentUser.id).map(attempt => ({ ...attempt, competition: { title: attempt.title } })) } };
       if (url.endsWith('/dashboard')) return { data: {
         stats: { attempted: state.attempts.length, averageScore: 75, points: currentUser.points || 240, accuracy: 75, xp: currentUser.role === 'student' ? 340 : 0, level: 2, rank: 1, competitions: state.attempts.length },
         recentAttempts: state.attempts.slice(-5).reverse(),
@@ -111,36 +149,163 @@ if (DEMO_MODE) {
       } };
       if (url.endsWith('/admin/stats')) return { data: { students: state.users.filter(user => user.role === 'student').length, subjects: state.subjects.length, questions: state.questions.length, competitions: state.competitions.length, attempts: state.attempts.length, participants: state.attempts.length, averagePerformance: 75 } };
       if (url.endsWith('/admin/users')) return { data: { users: state.users } };
-      if (url.endsWith('/admin/questions')) return { data: { questions: state.questions } };
-      if (url.endsWith('/admin/competitions')) return { data: { competitions: state.competitions } };
+      if (url.includes('/admin/competitions/') && url.endsWith('/participants')) {
+        const competitionId = url.split('/').filter(Boolean).at(-2);
+        const competition = state.competitions.find(item => item._id === competitionId);
+        if (!competition) throw { response: { data: { message: 'Competition not found' } } };
+        const participants = [...new Set([...(competition.participants || []), ...state.attempts.filter(attempt => attempt.competitionId === competitionId).map(attempt => attempt.userId)])]
+          .map(id => {
+            const user = state.users.find(item => item.id === id);
+            const attempt = state.attempts.find(item => item.userId === id && item.competitionId === competitionId);
+            return user ? { id, name: user.name, email: user.email, attemptStatus: attempt?.status || 'Not started', score: attempt?.score ?? null, maxScore: attempt?.maxScore ?? null, submittedAt: attempt?.submittedAt || null } : null;
+          }).filter(Boolean);
+        return { data: { competition: { id: competitionId, title: competition.title }, participants } };
+      }
+      if (url.endsWith('/admin/questions') && method === 'get') return { data: { questions: state.questions } };
+      if (url.endsWith('/admin/competitions') && method === 'get') return { data: { competitions: state.competitions } };
       if (url.endsWith('/admin/learning')) return { data: { materials: state.materials } };
       if (url.endsWith('/admin/announcements')) return { data: { announcements: state.announcements } };
       if (url.endsWith('/learning')) return { data: { materials: state.materials } };
       if (url.endsWith('/announcements')) return { data: { announcements: state.announcements } };
-      if (url.endsWith('/daily-challenge')) return { data: { challenge: { id: 'daily-demo', dateKey: new Date().toISOString().slice(0, 10), durationMinutes: 10, questions: state.questions.map(question => ({ _id: question._id, statement: question.statement, options: question.options.map(option => ({ text: option.text })) })) }, attempted: false, result: null } };
+      if (url.endsWith('/daily-challenge')) return { data: { challenge: { id: 'daily-demo', dateKey: new Date().toISOString().slice(0, 10), durationMinutes: 10, questions: state.questions.slice(0, 5).map(question => ({ _id: question._id, statement: question.statement, options: question.options.map(option => ({ text: option.text })) })) }, attempted: false, result: null } };
       if (url.endsWith('/certificates')) return { data: { certificates: state.certificates } };
       if (url.endsWith('/auth/me')) return { data: { user: currentUser } };
 
-      if (method === 'post' && url.includes('/competitions/') && url.endsWith('/join')) return { data: { message: 'Competition joined in demo mode' } };
+      if (method === 'post' && url.endsWith('/admin/questions')) {
+        const subject = state.subjects.find(item => item._id === payload.subject);
+        const question = { ...payload, _id: `demo-question-${Date.now()}`, subject: subject ? { _id: subject._id, name: subject.name } : payload.subject, createdAt: new Date().toISOString() };
+        state.questions.unshift(question);
+        saveDemoState(state);
+        return { data: { question } };
+      }
+      if (method === 'put' && url.includes('/admin/questions/')) {
+        const questionId = url.split('/').pop();
+        const index = state.questions.findIndex(question => question._id === questionId);
+        if (index < 0) throw { response: { data: { message: 'Question not found' } } };
+        const subject = state.subjects.find(item => item._id === payload.subject);
+        state.questions[index] = { ...state.questions[index], ...payload, subject: subject ? { _id: subject._id, name: subject.name } : payload.subject };
+        saveDemoState(state);
+        return { data: { question: state.questions[index] } };
+      }
+      if (method === 'delete' && url.includes('/admin/questions/')) {
+        const questionId = url.split('/').pop();
+        state.questions = state.questions.filter(question => question._id !== questionId);
+        saveDemoState(state);
+        return { data: { message: 'Question deleted' } };
+      }
+      if (method === 'post' && url.endsWith('/admin/competitions')) {
+        const subject = state.subjects.find(item => item._id === payload.subject);
+        const competition = {
+          ...payload,
+          _id: `demo-competition-${Date.now()}`,
+          code: payload.code || Math.random().toString(36).slice(2, 8).toUpperCase(),
+          subject: subject ? { _id: subject._id, name: subject.name } : payload.subject,
+          questions: payload.questions || [],
+          participants: [],
+          status: new Date(payload.startAt) <= new Date() ? 'Live' : 'Upcoming',
+          createdAt: new Date().toISOString()
+        };
+        state.competitions.unshift(competition);
+        saveDemoState(state);
+        return { data: { competition } };
+      }
+      if (method === 'put' && url.includes('/admin/competitions/')) {
+        const competitionId = url.split('/').pop();
+        const index = state.competitions.findIndex(item => item._id === competitionId);
+        if (index < 0) throw { response: { data: { message: 'Competition not found' } } };
+        const subject = state.subjects.find(item => item._id === payload.subject);
+        state.competitions[index] = { ...state.competitions[index], ...payload, subject: subject ? { _id: subject._id, name: subject.name } : payload.subject };
+        saveDemoState(state);
+        return { data: { competition: state.competitions[index] } };
+      }
+      if (method === 'delete' && url.includes('/admin/competitions/')) {
+        const competitionId = url.split('/').pop();
+        state.competitions = state.competitions.filter(item => item._id !== competitionId);
+        saveDemoState(state);
+        return { data: { message: 'Competition deleted' } };
+      }
+      if (method === 'post' && url.includes('/admin/competitions/') && url.endsWith('/activate')) {
+        const competitionId = url.split('/').filter(Boolean).at(-2);
+        const competition = state.competitions.find(item => item._id === competitionId);
+        if (!competition) throw { response: { data: { message: 'Competition not found' } } };
+        if (!competition.questions.length) throw { response: { data: { message: 'Add at least one question before starting this test' } } };
+        competition.startAt = new Date().toISOString();
+        if (new Date(competition.endAt) <= new Date()) competition.endAt = new Date(Date.now() + competition.durationMinutes * 60000).toISOString();
+        competition.status = 'Live';
+        competition.published = true;
+        saveDemoState(state);
+        return { data: { competition } };
+      }
+      if (method === 'post' && url.includes('/competitions/') && url.endsWith('/join')) {
+        const competitionId = url.split('/').filter(Boolean).at(-2);
+        const competition = state.competitions.find(item => item._id === competitionId);
+        if (!competition || String(payload.code || '').trim().toUpperCase() !== competition.code) throw { response: { data: { message: 'Invalid competition code' } } };
+        competition.participants = competition.participants || [];
+        if (!competition.participants.includes(currentUser.id)) competition.participants.push(currentUser.id);
+        saveDemoState(state);
+        return { data: { message: 'Joined successfully', competition: { id: competition._id, title: competition.title, status: competition.status } } };
+      }
+      if (method === 'post' && url.endsWith('/competitions/join-by-code')) {
+        const competition = state.competitions.find(item => item.code === String(payload.code || '').trim().toUpperCase());
+        if (!competition) throw { response: { data: { message: 'Invalid competition code' } } };
+        competition.participants = competition.participants || [];
+        if (!competition.participants.includes(currentUser.id)) competition.participants.push(currentUser.id);
+        saveDemoState(state);
+        return { data: { message: 'Joined successfully', competition: { id: competition._id, title: competition.title, status: competition.status } } };
+      }
       if (method === 'post' && url.includes('/competitions/') && url.endsWith('/start')) {
         const id = url.split('/').filter(Boolean).at(-2);
-        const competition = state.competitions.find(item => item._id === id) || state.competitions[0];
-        const questions = state.questions.filter(question => competition.questions.includes(question._id));
-        return { data: { attemptId: `demo-attempt-${Date.now()}`, deadlineAt: new Date(Date.now() + competition.durationMinutes * 60000).toISOString(), questions: questions.map(question => ({ _id: question._id, statement: question.statement, marks: question.marks, options: question.options.map(option => ({ text: option.text, originalIndex: question.options.indexOf(option) })) })) } };
+        const competition = state.competitions.find(item => item._id === id);
+        if (!competition) throw { response: { data: { message: 'Competition not found' } } };
+        if (!(competition.participants || []).includes(currentUser.id)) throw { response: { data: { message: 'Join the competition before starting' } } };
+        const questions = state.questions.filter(question => (competition.questions || []).includes(question._id));
+        if (!questions.length) throw { response: { data: { message: 'This competition has no questions yet' } } };
+        let attempt = state.attempts.find(item => item.userId === currentUser.id && item.competitionId === id && item.status === 'in-progress');
+        if (!attempt) {
+          attempt = { _id: `demo-attempt-${Date.now()}`, userId: currentUser.id, competitionId: id, title: competition.title, answers: [], status: 'in-progress', startedAt: new Date().toISOString(), deadlineAt: new Date(Date.now() + competition.durationMinutes * 60000).toISOString() };
+          state.attempts.push(attempt);
+          saveDemoState(state);
+        }
+        return { data: { attemptId: attempt._id, deadlineAt: attempt.deadlineAt, questions: questions.map(question => ({ _id: question._id, statement: question.statement, marks: question.marks, options: question.options.map((option, optionIndex) => ({ text: option.text, originalIndex: optionIndex })) })) } };
       }
+      if (method === 'put' && url.includes('/attempts/') && url.endsWith('/progress')) {
+        const attemptId = url.split('/').filter(Boolean).at(-2);
+        const attempt = state.attempts.find(item => item._id === attemptId && item.userId === currentUser.id && item.status === 'in-progress');
+        if (!attempt) throw { response: { data: { message: 'Active attempt not found' } } };
+        attempt.answers = payload.answers || attempt.answers;
+        saveDemoState(state);
+        return { data: { message: 'Progress saved' } };
+      }
+      if (method === 'post' && url.includes('/attempts/') && url.endsWith('/suspicious-event')) return { data: { message: 'Event recorded' } };
       if (method === 'post' && url.includes('/attempts/') && url.endsWith('/submit')) {
         let score = 0, correct = 0, incorrect = 0;
-        const answers = payload.answers || [];
-        for (const answer of answers) {
-          const question = state.questions.find(item => item._id === answer.question);
-          if (question && Number.isInteger(answer.selectedOption) && question.options[answer.selectedOption]?.isCorrect) { score += question.marks || 1; correct++; }
-          else if (question && answer.selectedOption !== null) incorrect++;
+        const attemptId = url.split('/').filter(Boolean).at(-2);
+        const attempt = state.attempts.find(item => item._id === attemptId && item.userId === currentUser.id);
+        if (!attempt || attempt.status === 'submitted') throw { response: { data: { message: 'Attempt is unavailable or already submitted' } } };
+        const competition = state.competitions.find(item => item._id === attempt.competitionId);
+        const questions = state.questions.filter(question => (competition?.questions || []).includes(question._id));
+        const answers = Array.isArray(payload.answers) ? payload.answers : attempt.answers || [];
+        for (const question of questions) {
+          const answer = answers.find(item => item?.question === question._id);
+          if (!answer || answer.selectedOption === null || answer.selectedOption === undefined) continue;
+          if (question.options[answer.selectedOption]?.isCorrect) { score += question.marks || 1; correct++; }
+          else incorrect++;
         }
-        const maxScore = answers.length ? state.questions.slice(0, answers.length).reduce((sum, question) => sum + (question.marks || 1), 0) : 4;
-        const unattempted = Math.max(0, maxScore - correct - incorrect);
-        state.attempts.push({ _id: `demo-result-${Date.now()}`, userId: currentUser.id, title: 'Java Sprint Challenge', competition: { title: 'Java Sprint Challenge' }, score, maxScore, correct, incorrect, unattempted, accuracy: Math.round(correct / Math.max(1, correct + incorrect) * 100), submittedAt: new Date().toISOString() });
+        const maxScore = questions.reduce((sum, question) => sum + (question.marks || 1), 0);
+        const unattempted = questions.length - correct - incorrect;
+        Object.assign(attempt, {
+          score, maxScore, correct, incorrect, unattempted,
+          accuracy: Math.round(correct / Math.max(1, correct + incorrect) * 100),
+          submittedAt: new Date().toISOString(),
+          status: 'submitted'
+        });
+        const student = state.users.find(user => user.id === currentUser.id);
+        if (student) {
+          student.points = (student.points || 0) + score;
+          student.xp = (student.xp || 0) + 25 + correct * 5;
+        }
         saveDemoState(state);
-        return { data: { message: 'Submitted successfully', result: { score, maxScore, correct, incorrect, unattempted, accuracy: Math.round(correct / Math.max(1, correct + incorrect) * 100), timeTakenMinutes: 1 } } };
+        return { data: { message: 'Submitted successfully', result: { score, maxScore, correct, incorrect, unattempted, accuracy: attempt.accuracy, timeTakenMinutes: Math.max(1, Math.round((Date.now() - new Date(attempt.startedAt)) / 60000)) } } };
       }
 
       return Promise.reject(error);
@@ -536,23 +701,28 @@ function StudentDashboard({ data, user, navigate }) {
 
 function Competitions({ data }) {
   const navigate = useNavigate();
-  const join = async competition => {
-    const code = window.prompt(`Enter the code for ${competition.title}`);
+  const [testCode, setTestCode] = useState('');
+  const join = async (competition, submittedCode) => {
+    const code = submittedCode ?? window.prompt(`Enter the code for ${competition.title}`);
     if (!code) return;
-    if (DEMO_MODE) {
-      if (code.trim().toUpperCase() !== competition.code) { toast.error('Invalid competition code'); return; }
-      toast.success('Competition joined');
-      if (competition.status === 'Live') navigate(`/quiz/${competition._id}`);
-      return;
-    }
     try {
       await api.post(`/competitions/${competition._id}/join`, { code }, { headers: tokenHeaders() });
       toast.success('Competition joined');
       if (competition.status === 'Live') navigate(`/quiz/${competition._id}`);
     } catch (error) { toast.error(error.response?.data?.message || 'Unable to join'); }
   };
-  return <div><div className="page-heading"><div><span>CHALLENGES</span><h1>Competitions</h1><p>Join timed quizzes and compete for points.</p></div></div>
-    <div className="competition-grid large">{data.map(c => <article className="competition-card" key={c._id}><div className={`status ${c.status?.toLowerCase()}`}>{c.status}</div><h3>{c.title}</h3><p>{c.description}</p><div className="competition-meta"><span>{c.subject?.name}</span><span>{c.durationMinutes} min</span><span>{c.participantCount || 0} joined</span></div><button className="btn-primary" onClick={() => join(c)}>Join competition</button></article>)}</div></div>;
+  const joinByCode = async event => {
+    event.preventDefault();
+    try {
+      const { data: response } = await api.post('/competitions/join-by-code', { code: testCode }, { headers: tokenHeaders() });
+      setTestCode('');
+      toast.success('Competition joined');
+      if (response.competition?.status === 'Live') navigate(`/quiz/${response.competition.id}`);
+    } catch (error) { toast.error(error.response?.data?.message || 'Unable to join test'); }
+  };
+  return <div><div className="page-heading"><div><span>CHALLENGES</span><h1>Competitions</h1><p>Enter the test code shared by your administrator to join a timed quiz.</p></div></div>
+    <form className="panel test-code-form" onSubmit={joinByCode}><label htmlFor="test-code">Test code</label><div><input id="test-code" value={testCode} onChange={event => setTestCode(event.target.value.toUpperCase())} placeholder="Enter your test code" autoComplete="off" required /><button className="btn-primary" type="submit">Join test</button></div></form>
+    <div className="competition-grid large">{data.map(c => <article className="competition-card" key={c._id}><div className={`status ${c.status?.toLowerCase()}`}>{c.status}</div><h3>{c.title}</h3><p>{c.description}</p><div className="competition-meta"><span>{c.subject?.name}</span><span>{c.durationMinutes} min</span><span>{c.participantCount || 0} joined</span></div><button className="btn-secondary" onClick={() => join(c)}>Enter test code</button></article>)}</div></div>;
 }
 
 function Learning({ data }) {
@@ -837,9 +1007,24 @@ function AdminCompetitions() {
     try { await api.delete(`/admin/competitions/${competition._id}`, { headers: tokenHeaders() }); toast.success('Competition deleted'); load(); }
     catch (error) { toast.error(error.response?.data?.message || 'Unable to delete competition'); }
   };
+  const activate = async competition => {
+    try {
+      await api.post(`/admin/competitions/${competition._id}/activate`, {}, { headers: tokenHeaders() });
+      toast.success(`${competition.title} is live. Share code ${competition.code} with students.`);
+      load();
+    } catch (error) { toast.error(error.response?.data?.message || 'Unable to start test'); }
+  };
+  const copyCode = async code => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success('Test code copied');
+    } catch {
+      toast.error(`Share this test code: ${code}`);
+    }
+  };
   const toggleQuestion = id => setForm(current => ({ ...current, questions: current.questions.includes(id) ? current.questions.filter(questionId => questionId !== id) : [...current.questions, id] }));
   return <div>
-    <div className="page-heading"><div><span>COMPETITION MANAGEMENT</span><h1>Quizzes and competitions</h1><p>Create schedules and assign persistent MCQ questions.</p></div></div>
+    <div className="page-heading"><div><span>COMPETITION MANAGEMENT</span><h1>Quizzes and competitions</h1><p>Create quizzes, start them when ready, and share the displayed test code with students.</p></div></div>
     <div className="admin-form-layout competition-admin-layout">
       <form className="panel admin-form" onSubmit={save}>
         <h3>{editingId ? 'Edit competition' : 'Create competition'}</h3>
@@ -853,7 +1038,7 @@ function AdminCompetitions() {
         <div className="question-selector"><h4>Assign questions</h4>{questions.filter(question => !form.subject || !question.subject || String(question.subject._id || question.subject) === String(form.subject)).map(question => <label key={question._id}><input type="checkbox" checked={form.questions.includes(question._id)} onChange={() => toggleQuestion(question._id)} /><span>{question.statement}</span></label>)}</div>
         <div className="admin-form-actions">{editingId && <button type="button" className="btn-secondary" onClick={reset}>Cancel edit</button>}<button className="btn-primary" type="submit">{editingId ? 'Save changes' : 'Create competition'}</button></div>
       </form>
-      <div className="panel admin-list"><h3>Competitions</h3>{competitions.length ? competitions.map(competition => <article className="admin-list-row" key={competition._id}><div><h4>{competition.title}</h4><p>{competition.subject?.name} · {competition.status || 'Upcoming'} · {competition.published ? 'Published' : 'Unpublished'}</p></div><div><button className="btn-secondary" onClick={() => window.location.href=`/admin/competitions/${competition._id}/participants`}>Participants</button><button className="btn-secondary" onClick={() => edit(competition)}>Edit</button><button className="danger-button" onClick={() => remove(competition)}>Delete</button></div></article>) : <div className="empty-card">No competitions have been created.</div>}</div>
+      <div className="panel admin-list"><h3>Competitions</h3>{competitions.length ? competitions.map(competition => <article className="admin-list-row" key={competition._id}><div><h4>{competition.title}</h4><p>{competition.subject?.name} · {competition.status || 'Upcoming'} · {competition.published ? 'Published' : 'Unpublished'}</p><p className="test-code-display">Student test code: <strong>{competition.code}</strong> <button type="button" className="text-btn" onClick={() => copyCode(competition.code)}>Copy code</button></p></div><div>{competition.status !== 'Live' && <button className="btn-primary" disabled={!competition.questions?.length} title={!competition.questions?.length ? 'Assign at least one question before starting' : ''} onClick={() => activate(competition)}>Start test</button>}<button className="btn-secondary" onClick={() => window.location.href=`/admin/competitions/${competition._id}/participants`}>Participants</button><button className="btn-secondary" onClick={() => edit(competition)}>Edit</button><button className="danger-button" onClick={() => remove(competition)}>Delete</button></div></article>) : <div className="empty-card">No competitions have been created.</div>}</div>
     </div>
   </div>;
 }
@@ -872,6 +1057,8 @@ function QuizPage() {
   const [index, setIndex] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [submitted, setSubmitted] = useState(null);
+  const answersRef = useRef(answers);
+  const submitQuizRef = useRef(null);
   const id = window.location.pathname.split('/').pop();
 
   useEffect(() => {
@@ -880,10 +1067,24 @@ function QuizPage() {
     }).catch(e => toast.error(e.response?.data?.message || 'Unable to load competition instructions'));
   }, [id]);
 
+  const submitQuiz = useCallback(async auto => {
+    if (!quiz) return;
+    try {
+      const { data } = await api.post(`/attempts/${quiz.attemptId}/submit`, { answers: answersRef.current, forceAutoSubmit: auto, manual: !auto }, { headers: tokenHeaders() });
+      setSubmitted(data.result);
+    } catch (error) { toast.error(error.response?.data?.message || 'Submission failed'); }
+  }, [quiz]);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+  useEffect(() => {
+    submitQuizRef.current = submitQuiz;
+  }, [submitQuiz]);
+
   useEffect(() => {
     if (!quiz || submitted) return;
     const timer = setInterval(() => setSeconds(s => {
-      if (s <= 1) { clearInterval(timer); submitQuiz(true); return 0; }
+      if (s <= 1) { clearInterval(timer); submitQuizRef.current?.(true); return 0; }
       return s - 1;
     }), 1000);
     return () => clearInterval(timer);
@@ -911,13 +1112,6 @@ function QuizPage() {
     api.put(`/attempts/${quiz.attemptId}/progress`, { answers: next }, { headers: tokenHeaders() }).catch(() => {});
     return next;
   });
-  const submitQuiz = async auto => {
-    if (!quiz) return;
-    try {
-      const { data } = await api.post(`/attempts/${quiz.attemptId}/submit`, { answers, forceAutoSubmit: auto, manual: !auto }, { headers: tokenHeaders() });
-      setSubmitted(data.result);
-    } catch (error) { toast.error(error.response?.data?.message || 'Submission failed'); }
-  };
   const markForReview = () => setAnswers(prev => {
     const next = [...prev];
     next[index] = { ...(next[index] || { question: quiz.questions[index]._id, selectedOption: null }), marked: true };

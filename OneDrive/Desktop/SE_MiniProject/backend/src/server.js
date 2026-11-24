@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { User, Subject, Question, Competition, Attempt, Bookmark, LearningMaterial, Announcement, Certificate, DailyChallenge, DailyAttempt, SuspiciousEvent } from './models.js';
 import { auth, adminOnly } from './middleware.js';
+import { ensureSampleQuestionBank } from './sampleData.js';
 
 const app = express();
 const allowedOrigins = new Set([
@@ -142,7 +143,10 @@ app.get('/api/public/home', async (_req, res) => {
   }, new Map());
   res.json({
     subjects,
-    competitions: competitions.map(c => ({ ...c.toObject(), status: competitionStatus(c) })),
+    competitions: competitions.map(c => {
+      const { code, ...competition } = c.toObject();
+      return { ...competition, status: competitionStatus(c) };
+    }),
     leaderboard: [...leaderboard.values()].sort((a, b) => b.score - a.score).slice(0, 5)
   });
 });
@@ -156,22 +160,36 @@ app.get('/api/subjects', auth, async (req, res) => {
 
 app.get('/api/competitions', auth, async (req, res) => {
   const competitions = await Competition.find({ published: true }).populate('subject', 'name').sort({ startAt: 1 });
-  res.json({ competitions: competitions.map(c => ({ ...c.toObject(), status: competitionStatus(c), participantCount: c.participants.length })) });
+  res.json({ competitions: competitions.map(c => {
+    const { code, ...competition } = c.toObject();
+    return { ...competition, status: competitionStatus(c), participantCount: c.participants.length };
+  }) });
 });
 
-app.post('/api/competitions/:id/join', auth, async (req, res) => {
-  const competition = await Competition.findById(req.params.id);
+async function joinCompetition(req, res, competition) {
   if (!competition) return res.status(404).json({ message: 'Competition not found' });
   if (!competition.published) return res.status(400).json({ message: 'This competition is not published' });
   if (competitionStatus(competition) === 'Completed') return res.status(400).json({ message: 'This competition has ended' });
-  if (req.body.code?.toUpperCase() !== competition.code) return res.status(400).json({ message: 'Invalid competition code' });
+  if (String(req.body.code || '').trim().toUpperCase() !== competition.code) return res.status(400).json({ message: 'Invalid competition code' });
   if (competition.maxParticipants > 0 && competition.participants.length >= competition.maxParticipants
     && !competition.participants.some(id => String(id) === String(req.user._id))) {
     return res.status(400).json({ message: 'This competition has reached its participant limit' });
   }
   if (!competition.participants.includes(req.user._id)) competition.participants.push(req.user._id);
   await competition.save();
-  res.json({ message: 'Joined successfully' });
+  res.json({ message: 'Joined successfully', competition: { id: competition._id, title: competition.title, status: competitionStatus(competition) } });
+}
+
+app.post('/api/competitions/join-by-code', auth, async (req, res) => {
+  const code = String(req.body.code || '').trim().toUpperCase();
+  if (!code) return res.status(400).json({ message: 'Test code is required' });
+  const competition = await Competition.findOne({ code });
+  return joinCompetition(req, res, competition);
+});
+
+app.post('/api/competitions/:id/join', auth, async (req, res) => {
+  const competition = await Competition.findById(req.params.id);
+  return joinCompetition(req, res, competition);
 });
 
 app.post('/api/competitions/:id/start', auth, async (req, res) => {
@@ -179,6 +197,7 @@ app.post('/api/competitions/:id/start', auth, async (req, res) => {
   if (!competition) return res.status(404).json({ message: 'Competition not found' });
   if (!competition.published) return res.status(400).json({ message: 'Competition is not published' });
   if (competitionStatus(competition) !== 'Live') return res.status(400).json({ message: 'Competition is not currently live' });
+  if (!competition.questions.length) return res.status(400).json({ message: 'This competition has no questions yet' });
   if (!competition.participants.some(id => String(id) === String(req.user._id))) return res.status(403).json({ message: 'Join the competition before starting' });
 
   let attempt = await Attempt.findOne({ user: req.user._id, competition: competition._id });
@@ -322,7 +341,7 @@ app.get('/api/practice/questions', auth, async (req, res) => {
   const filter = {};
   if (req.query.subject) filter.subject = req.query.subject;
   if (req.query.difficulty) filter.difficulty = req.query.difficulty;
-  const questions = await Question.find(filter).populate('subject', 'name').limit(20);
+  const questions = await Question.find(filter).populate('subject', 'name').limit(50);
   res.json({ questions });
 });
 
@@ -597,6 +616,21 @@ app.delete('/api/admin/questions/:id', auth, adminOnly, async (req, res) => {
 app.get('/api/admin/competitions', auth, adminOnly, async (_req, res) => {
   res.json({ competitions: await Competition.find().populate('subject', 'name').populate('questions').sort({ startAt: -1 }) });
 });
+app.post('/api/admin/competitions/:id/activate', auth, adminOnly, async (req, res) => {
+  const competition = await Competition.findById(req.params.id);
+  if (!competition) return res.status(404).json({ message: 'Competition not found' });
+  if (!competition.questions.length) return res.status(400).json({ message: 'Add at least one question before starting this test' });
+
+  const now = new Date();
+  competition.startAt = now;
+  if (competition.endAt <= now) {
+    competition.endAt = new Date(now.getTime() + competition.durationMinutes * 60000);
+  }
+  competition.status = 'Live';
+  competition.published = true;
+  await competition.save();
+  res.json({ competition: { id: competition._id, title: competition.title, code: competition.code, startAt: competition.startAt, endAt: competition.endAt } });
+});
 app.get('/api/admin/competitions/:id/participants', auth, adminOnly, async (req, res) => {
   const competition = await Competition.findById(req.params.id).populate('participants', 'name email createdAt active');
   if (!competition) return res.status(404).json({ message: 'Competition not found' });
@@ -645,7 +679,7 @@ app.post('/api/admin/competitions', auth, adminOnly, async (req, res) => {
   if (Number(durationMinutes) < 1) return res.status(400).json({ message: 'Duration must be at least 1 minute' });
   if (Number(maxParticipants) < 0) return res.status(400).json({ message: 'Maximum participants cannot be negative' });
   const body = { title, subject, description, startAt, endAt, durationMinutes, difficulty, status, published, negativeMarking, randomizeQuestions, randomizeOptions, maxParticipants, totalMarks, questions: questions || [],
-    code: (req.body.code || Math.random().toString(36).slice(2, 8)).toUpperCase() };
+    code: (req.body.code || crypto.randomBytes(4).toString('hex')).trim().toUpperCase() };
   res.status(201).json({ competition: await Competition.create(body) });
 });
 app.put('/api/admin/competitions/:id', auth, adminOnly, async (req, res) => {
@@ -670,7 +704,10 @@ const port = process.env.PORT || 5000;
 export { app };
 if (process.env.NODE_ENV !== 'test') {
   mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/quizarena')
-    .then(() => app.listen(port, () => console.log(`QuizArena API running on port ${port}`)))
+    .then(async () => {
+      await ensureSampleQuestionBank();
+      app.listen(port, () => console.log(`QuizArena API running on port ${port}`));
+    })
     .catch(error => {
       console.error('MongoDB connection failed:', error.message);
       process.exit(1);
